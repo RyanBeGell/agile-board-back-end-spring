@@ -1,0 +1,74 @@
+# Maven #
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IntelliJ IDEA #
+.idea
+*.iws
+*.iml
+*.ipr
+*.idea/modules
+*.idea/workspace.xml
+*.idea/tasks.xml
+*.idea/dictionaries
+
+# Eclipse #
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# NetBeans #
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code #
+.vscode/
+
+# Compiled class files #
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Logs and databases #
+*.log
+*.sql
+*.sqlite
+*.db
+
+# OS generated files #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Other #
+*.swp
+*~.nib
+local.properties
+*.jks
+*.keystore
