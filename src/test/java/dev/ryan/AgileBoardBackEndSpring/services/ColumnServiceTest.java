@@ -1,8 +1,7 @@
 package dev.ryan.AgileBoardBackEndSpring.services;
 
-import dev.ryan.entities.Column;
-import dev.ryan.repositories.ColumnRepository;
-import dev.ryan.services.ColumnServiceImpl;
+import dev.ryan.AgileBoardBackEndSpring.entities.Column;
+import dev.ryan.AgileBoardBackEndSpring.repositories.ColumnRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

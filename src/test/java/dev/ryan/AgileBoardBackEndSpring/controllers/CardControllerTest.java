@@ -1,9 +1,8 @@
 package dev.ryan.AgileBoardBackEndSpring.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.ryan.controllers.CardController;
-import dev.ryan.entities.Card;
-import dev.ryan.services.CardService;
+import dev.ryan.AgileBoardBackEndSpring.entities.Card;
+import dev.ryan.AgileBoardBackEndSpring.services.CardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;

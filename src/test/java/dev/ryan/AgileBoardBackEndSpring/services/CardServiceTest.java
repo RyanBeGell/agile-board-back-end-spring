@@ -1,8 +1,7 @@
 package dev.ryan.AgileBoardBackEndSpring.services;
 
-import dev.ryan.entities.Card;
-import dev.ryan.repositories.CardRepository;
-import dev.ryan.services.CardServiceImpl;
+import dev.ryan.AgileBoardBackEndSpring.entities.Card;
+import dev.ryan.AgileBoardBackEndSpring.repositories.CardRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

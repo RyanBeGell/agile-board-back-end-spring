@@ -1,8 +1,7 @@
 package dev.ryan.AgileBoardBackEndSpring.services;
 
-import dev.ryan.entities.User;
-import dev.ryan.repositories.UserRepository;
-import dev.ryan.services.UserServiceImpl;
+import dev.ryan.AgileBoardBackEndSpring.entities.User;
+import dev.ryan.AgileBoardBackEndSpring.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

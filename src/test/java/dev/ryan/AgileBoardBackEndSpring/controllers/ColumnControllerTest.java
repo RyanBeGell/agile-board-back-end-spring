@@ -1,9 +1,8 @@
 package dev.ryan.AgileBoardBackEndSpring.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.ryan.controllers.ColumnController;
-import dev.ryan.entities.Column;
-import dev.ryan.services.ColumnService;
+import dev.ryan.AgileBoardBackEndSpring.entities.Column;
+import dev.ryan.AgileBoardBackEndSpring.services.ColumnService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;

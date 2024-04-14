@@ -1,8 +1,7 @@
 package dev.ryan.AgileBoardBackEndSpring.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.ryan.controllers.UserController;
-import dev.ryan.entities.User;
-import dev.ryan.services.UserService;
+import dev.ryan.AgileBoardBackEndSpring.entities.User;
+import dev.ryan.AgileBoardBackEndSpring.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
