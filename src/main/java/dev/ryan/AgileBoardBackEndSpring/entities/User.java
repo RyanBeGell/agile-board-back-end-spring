@@ -1,5 +1,6 @@
 package dev.ryan.AgileBoardBackEndSpring.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.persistence.Column;
 import lombok.Builder;
@@ -10,10 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -44,6 +42,8 @@ public class User implements UserDetails {
     @JoinTable(name = "user_workspaces",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "workspace_id"))
+    @JsonIgnore
+    //JSONIgnore to avoid recursion
     private Set<Workspace> workspaces = new HashSet<>();
 
     public User(String username, String email, String password) {
@@ -51,6 +51,28 @@ public class User implements UserDetails {
         this.email = email;
         this.password = password;
         this.workspaces = new HashSet<>();
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", workspaceCount=" + (workspaces != null ? workspaces.size() : 0) + // Only count workspaces to avoid recursion
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override
