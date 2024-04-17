@@ -1,6 +1,8 @@
 package dev.ryan.AgileBoardBackEndSpring.services;
 
 import dev.ryan.AgileBoardBackEndSpring.entities.User;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
 import java.util.List;
 
 public interface UserService {
@@ -9,4 +11,6 @@ public interface UserService {
     List<User> findAllUsers();
     User updateUser(User user);
     void deleteUserById(Long id);
+
+    User findUserByUsername(String username) throws UsernameNotFoundException;
 }
