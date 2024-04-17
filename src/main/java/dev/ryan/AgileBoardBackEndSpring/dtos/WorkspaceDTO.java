@@ -1,11 +1,11 @@
 package dev.ryan.AgileBoardBackEndSpring.dtos;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class WorkspaceDTO {
     private Long id;
     private String name;

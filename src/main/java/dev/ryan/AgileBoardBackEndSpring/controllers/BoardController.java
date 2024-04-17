@@ -1,9 +1,12 @@
 package dev.ryan.AgileBoardBackEndSpring.controllers;
 
-import dev.ryan.AgileBoardBackEndSpring.entities.Board;
+import dev.ryan.AgileBoardBackEndSpring.dtos.BoardDTO;
+import dev.ryan.AgileBoardBackEndSpring.entities.User;
 import dev.ryan.AgileBoardBackEndSpring.services.BoardService;
+import dev.ryan.AgileBoardBackEndSpring.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,40 +16,43 @@ import java.util.List;
 public class BoardController {
 
     private final BoardService boardService;
+    private final UserService userService;
 
     @Autowired
-    public BoardController(BoardService boardService) {
+    public BoardController(BoardService boardService, UserService userService) {
         this.boardService = boardService;
+        this.userService = userService;
     }
 
     @PostMapping
-    public ResponseEntity<Board> createBoard(@RequestBody Board board) {
-        Board savedBoard = boardService.createBoard(board);
-        return ResponseEntity.ok(savedBoard);
+    public ResponseEntity<BoardDTO> createBoard(@RequestBody BoardDTO boardDto, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        BoardDTO savedBoardDto = boardService.createBoard(boardDto, user);
+        return ResponseEntity.ok(savedBoardDto);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Board> getBoardById(@PathVariable Long id) {
-        Board board = boardService.findBoardById(id);
-        return ResponseEntity.ok(board);
+    public ResponseEntity<BoardDTO> getBoardById(@PathVariable Long id, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        return ResponseEntity.ok(boardService.findBoardById(id, user));
     }
 
     @GetMapping
-    public ResponseEntity<List<Board>> getAllBoards() {
-        List<Board> boards = boardService.findAllBoards();
-        return ResponseEntity.ok(boards);
+    public ResponseEntity<List<BoardDTO>> getAllBoards(Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        return ResponseEntity.ok(boardService.findAllBoards(user));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Board> updateBoard(@PathVariable Long id, @RequestBody Board board) {
-        board.setId(id);
-        Board updatedBoard = boardService.updateBoard(board);
-        return ResponseEntity.ok(updatedBoard);
+    public ResponseEntity<BoardDTO> updateBoard(@PathVariable Long id, @RequestBody BoardDTO boardDto, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        return ResponseEntity.ok(boardService.updateBoard(id, boardDto, user));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBoard(@PathVariable Long id) {
-        boardService.deleteBoardById(id);
+    public ResponseEntity<Void> deleteBoard(@PathVariable Long id, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        boardService.deleteBoardById(id, user);
         return ResponseEntity.ok().build();
     }
 }

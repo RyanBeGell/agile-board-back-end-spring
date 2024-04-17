@@ -2,14 +2,14 @@ package dev.ryan.AgileBoardBackEndSpring.dtos;
 
 import lombok.*;
 
-import java.util.List;
-
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDTO {
+public class BoardDTO {
     private Long id;
-    private String username;
-    private List<WorkspaceDTO> workspaces;
+    private String name;
+    private String description;
+    private Long workspaceId;  // Only ID to avoid recursion
+
 }
