@@ -1,9 +1,13 @@
 package dev.ryan.AgileBoardBackEndSpring.controllers;
 
+import dev.ryan.AgileBoardBackEndSpring.dtos.CardDTO;
 import dev.ryan.AgileBoardBackEndSpring.entities.Card;
+import dev.ryan.AgileBoardBackEndSpring.entities.User;
 import dev.ryan.AgileBoardBackEndSpring.services.CardService;
+import dev.ryan.AgileBoardBackEndSpring.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,40 +17,47 @@ import java.util.List;
 public class CardController {
 
     private final CardService cardService;
+    private final UserService userService;
 
     @Autowired
-    public CardController(CardService cardService) {
+    public CardController(CardService cardService, UserService userService) {
         this.cardService = cardService;
+        this.userService = userService;
     }
 
     @PostMapping
-    public ResponseEntity<Card> createCard(@RequestBody Card card) {
-        Card savedCard = cardService.createCard(card);
+    public ResponseEntity<CardDTO> createCard(@RequestBody CardDTO cardDto, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        CardDTO savedCard = cardService.createCard(cardDto, user);
         return ResponseEntity.ok(savedCard);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Card> getCardById(@PathVariable Long id) {
-        Card card = cardService.findCardById(id);
+    public ResponseEntity<CardDTO> getCardById(@PathVariable Long id, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        CardDTO card = cardService.findCardById(id, user);
         return ResponseEntity.ok(card);
     }
 
-    @GetMapping
-    public ResponseEntity<List<Card>> getAllCards() {
-        List<Card> cards = cardService.findAllCards();
+    @GetMapping("/column/{columnId}")
+    public ResponseEntity<List<CardDTO>> getCardsByColumn(@PathVariable Long columnId, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        List<CardDTO> cards = cardService.findAllCardsByColumnId(columnId,user);
         return ResponseEntity.ok(cards);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Card> updateCard(@PathVariable Long id, @RequestBody Card card) {
-        card.setId(id); // Ensure the ID is set to the path variable
-        Card updatedCard = cardService.updateCard(card);
+    public ResponseEntity<CardDTO> updateCard(@PathVariable Long id, @RequestBody CardDTO cardDto, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        cardDto.setId(id); // Ensure the ID is set to the path variable
+        CardDTO updatedCard = cardService.updateCard(cardDto, user);
         return ResponseEntity.ok(updatedCard);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCard(@PathVariable Long id) {
-        cardService.deleteCardById(id);
+    public ResponseEntity<Void> deleteCard(@PathVariable Long id, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        cardService.deleteCardById(id, user);
         return ResponseEntity.ok().build();
     }
 }

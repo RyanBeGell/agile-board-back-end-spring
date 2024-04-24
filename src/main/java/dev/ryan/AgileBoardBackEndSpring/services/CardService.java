@@ -1,12 +1,16 @@
 package dev.ryan.AgileBoardBackEndSpring.services;
 
+import dev.ryan.AgileBoardBackEndSpring.dtos.CardDTO;
 import dev.ryan.AgileBoardBackEndSpring.entities.Card;
+import dev.ryan.AgileBoardBackEndSpring.entities.User;
+
 import java.util.List;
 
 public interface CardService {
-    Card createCard(Card card);
-    Card findCardById(Long id);
-    List<Card> findAllCards();
-    Card updateCard(Card card);
-    void deleteCardById(Long id);
+    CardDTO createCard(CardDTO cardDto, User user);
+    CardDTO findCardById(Long id, User user);
+    List<CardDTO> findAllCardsByColumnId(Long columnId, User user);
+    CardDTO updateCard(CardDTO cardDto, User user);
+    void deleteCardById(Long id, User user);
+    void updateCardPositions(Long columnId, List<Long> cardIds, User user);
 }
