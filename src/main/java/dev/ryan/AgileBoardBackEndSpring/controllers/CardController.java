@@ -25,10 +25,12 @@ public class CardController {
         this.userService = userService;
     }
 
-    @PostMapping
-    public ResponseEntity<CardDTO> createCard(@RequestBody CardDTO cardDto, Authentication authentication) {
+    @PostMapping("/column/{columnId}")
+    public ResponseEntity<CardDTO> createCard(@RequestBody CardDTO cardDto,
+                                              @PathVariable Long columnId,
+                                              Authentication authentication) {
         User user = userService.findUserByUsername(authentication.getName());
-        CardDTO savedCard = cardService.createCard(cardDto, user);
+        CardDTO savedCard = cardService.createCard(cardDto, columnId, user);
         return ResponseEntity.ok(savedCard);
     }
 
@@ -42,14 +44,14 @@ public class CardController {
     @GetMapping("/column/{columnId}")
     public ResponseEntity<List<CardDTO>> getCardsByColumn(@PathVariable Long columnId, Authentication authentication) {
         User user = userService.findUserByUsername(authentication.getName());
-        List<CardDTO> cards = cardService.findAllCardsByColumnId(columnId,user);
+        List<CardDTO> cards = cardService.findAllCardsByColumnId(columnId, user);
         return ResponseEntity.ok(cards);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CardDTO> updateCard(@PathVariable Long id, @RequestBody CardDTO cardDto, Authentication authentication) {
         User user = userService.findUserByUsername(authentication.getName());
-        cardDto.setId(id); // Ensure the ID is set to the path variable
+        cardDto.setId(id);
         CardDTO updatedCard = cardService.updateCard(cardDto, user);
         return ResponseEntity.ok(updatedCard);
     }

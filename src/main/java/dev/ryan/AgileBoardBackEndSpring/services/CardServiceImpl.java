@@ -4,12 +4,9 @@ import dev.ryan.AgileBoardBackEndSpring.dtos.CardDTO;
 import dev.ryan.AgileBoardBackEndSpring.entities.Card;
 import dev.ryan.AgileBoardBackEndSpring.entities.Column;
 import dev.ryan.AgileBoardBackEndSpring.entities.User;
-import dev.ryan.AgileBoardBackEndSpring.exceptions.CardNotFoundException;
 import dev.ryan.AgileBoardBackEndSpring.repositories.CardRepository;
 import dev.ryan.AgileBoardBackEndSpring.repositories.ColumnRepository;
-import dev.ryan.AgileBoardBackEndSpring.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,115 +15,74 @@ import java.util.stream.Collectors;
 
 @Service
 public class CardServiceImpl implements CardService {
-
-    private final CardRepository cardRepository;
-    private final ColumnRepository columnRepository;
-    private final UserRepository userRepository;
-
     @Autowired
-    public CardServiceImpl(CardRepository cardRepository, ColumnRepository columnRepository, UserRepository userRepository) {
-        this.cardRepository = cardRepository;
-        this.columnRepository = columnRepository;
-        this.userRepository = userRepository;
-    }
+    private CardRepository cardRepository;
+    @Autowired
+    private ColumnRepository columnRepository;
 
     @Override
     @Transactional
-    public CardDTO createCard(CardDTO cardDto, User user) {
-        Column column = columnRepository.findById(cardDto.getColumnId())
-                .orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + cardDto.getColumnId()));
-
-        if (!column.getBoard().getWorkspace().getUsers().contains(user)) {
-            throw new AccessDeniedException("User does not have access to this column");
-        }
-
+    public CardDTO createCard(CardDTO cardDto, Long columnId, User user) {
+        Column column = columnRepository.findById(columnId).orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + columnId));
+        int newPosition = getMaxCardPosition(columnId) + 1;
         Card card = new Card();
         card.setTitle(cardDto.getTitle());
         card.setDescription(cardDto.getDescription());
         card.setColumn(column);
-        card.setPosition(cardDto.getPosition());
-        card.setDueDate(cardDto.getDueDate());
-        card.setAssignees(cardDto.getAssigneeIds().stream()
-                .map(userId -> userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId)))
-                .collect(Collectors.toSet()));
-
-        return toDto(cardRepository.save(card));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public CardDTO findCardById(Long id, User user) {
-        Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new CardNotFoundException("Card not found with id: " + id));
-
-        if (!card.getColumn().getBoard().getWorkspace().getUsers().contains(user)) {
-            throw new AccessDeniedException("User does not have access to this card");
-        }
+        card.setPosition(newPosition);
+        card = cardRepository.save(card);
         return toDto(card);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<CardDTO> findAllCardsByColumnId(Long columnId, User user) {
-        Column column = columnRepository.findById(columnId)
-                .orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + columnId));
-
-        if (!column.getBoard().getWorkspace().getUsers().contains(user)) {
-            throw new AccessDeniedException("User does not have access to this column");
-        }
-
-        return cardRepository.findByColumnIdOrderByPosition(columnId).stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+    public CardDTO findCardById(Long id, User user) {
+        Card card = cardRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Card not found with id: " + id));
+        return toDto(card);
     }
 
     @Override
-    @Transactional
+    public List<CardDTO> findAllCardsByColumnId(Long columnId, User user) {
+        List<Card> cards = cardRepository.findByColumnIdOrderByPosition(columnId);
+        return cards.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    @Override
     public CardDTO updateCard(CardDTO cardDto, User user) {
-        Card existingCard = cardRepository.findById(cardDto.getId())
-                .orElseThrow(() -> new CardNotFoundException("Card not found with id: " + cardDto.getId()));
-
-        if (!existingCard.getColumn().getBoard().getWorkspace().getUsers().contains(user)) {
-            throw new AccessDeniedException("User does not have access to this card");
-        }
-
-        existingCard.setTitle(cardDto.getTitle());
-        existingCard.setDescription(cardDto.getDescription());
-        existingCard.setPosition(cardDto.getPosition());
-        existingCard.setDueDate(cardDto.getDueDate());
-        existingCard.setAssignees(cardDto.getAssigneeIds().stream().map(id -> new User(id)).collect(Collectors.toSet()));
-
-        return toDto(cardRepository.save(existingCard));
+        Card card = cardRepository.findById(cardDto.getId()).orElseThrow(() -> new IllegalArgumentException("Card not found with id: " + cardDto.getId()));
+        card.setTitle(cardDto.getTitle());
+        card.setDescription(cardDto.getDescription());
+        cardRepository.save(card);
+        return toDto(card);
     }
 
     @Override
     @Transactional
     public void deleteCardById(Long id, User user) {
-        Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new CardNotFoundException("Card not found with id: " + id));
-
-        if (!card.getColumn().getBoard().getWorkspace().getUsers().contains(user)) {
-            throw new AccessDeniedException("User does not have access to this card");
-        }
+        Card card = cardRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Card not found with id: " + id));
         cardRepository.delete(card);
+        reorderRemainingCards(card.getColumn().getId());
+    }
+
+    @Override
+    @Transactional
+    public void moveCardToPosition(Long cardId, Long newColumnId, int newPosition, User user) {
+        Card card = cardRepository.findById(cardId).orElseThrow(() -> new IllegalArgumentException("Card not found with id: " + cardId));
+        card.setColumn(columnRepository.findById(newColumnId).orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + newColumnId)));
+        card.setPosition(newPosition);
+        reorderRemainingCards(card.getColumn().getId());
+        cardRepository.save(card);
     }
 
     @Override
     @Transactional
     public void updateCardPositions(Long columnId, List<Long> cardIds, User user) {
-        Column column = columnRepository.findById(columnId)
-                .orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + columnId));
-
-        if (!column.getBoard().getWorkspace().getUsers().contains(user)) {
-            throw new AccessDeniedException("User does not have access to this column");
-        }
-
         List<Card> cards = cardRepository.findAllById(cardIds);
-        for (int i = 0; i < cards.size(); i++) {
-            Card card = cards.get(i);
-            card.setPosition(i);
-            cardRepository.save(card);
+        int position = 1;
+        for (Long cardId : cardIds) {
+            Card card = cards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElseThrow(() -> new IllegalArgumentException("Card not found with id: " + cardId));
+            card.setPosition(position++);
         }
+        cardRepository.saveAll(cards);
     }
 
     private CardDTO toDto(Card card) {
@@ -139,5 +95,22 @@ public class CardServiceImpl implements CardService {
                 card.getDueDate(),
                 card.getAssignees().stream().map(User::getId).collect(Collectors.toSet())
         );
+    }
+
+
+    private int getMaxCardPosition(Long columnId) {
+        return cardRepository.findByColumnIdOrderByPosition(columnId).stream()
+                .mapToInt(Card::getPosition)
+                .max()
+                .orElse(0);
+    }
+
+    private void reorderRemainingCards(Long columnId) {
+        List<Card> cards = cardRepository.findByColumnIdOrderByPosition(columnId);
+        int position = 1;
+        for (Card card : cards) {
+            card.setPosition(position++);
+        }
+        cardRepository.saveAll(cards);
     }
 }
