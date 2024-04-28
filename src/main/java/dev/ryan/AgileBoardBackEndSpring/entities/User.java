@@ -53,6 +53,11 @@ public class User implements UserDetails {
         this.workspaces = new HashSet<>();
     }
 
+    // Constructor that accepts ID only
+    public User(Long id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return "User{" +
