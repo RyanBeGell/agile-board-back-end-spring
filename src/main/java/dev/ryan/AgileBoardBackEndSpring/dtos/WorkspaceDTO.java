@@ -9,5 +9,7 @@ import lombok.*;
 public class WorkspaceDTO {
     private Long id;
     private String name;
+    private String icon; // Add the icon field as String
+
 
 }

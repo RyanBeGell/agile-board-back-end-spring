@@ -26,4 +26,6 @@ public class Board {
 
     @OneToMany(mappedBy = "board", fetch = FetchType.LAZY)
     private Set<Column> columns = new HashSet<>();
+
+    private String gradient;
 }

@@ -11,4 +11,5 @@ import java.util.Set;
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Long> {
     List<Board> findAllByWorkspaceIn(Set<Workspace> workspaces);
+    List<Board> findAllByWorkspaceId(Long workspaceId);
 }

@@ -2,6 +2,8 @@ package dev.ryan.AgileBoardBackEndSpring.dtos;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -11,5 +13,7 @@ public class BoardDTO {
     private String name;
     private String description;
     private Long workspaceId;  // Only ID to avoid recursion
+    private String gradient;
+    private List<ColumnDTO> columns;  // Include columns directly
 
 }

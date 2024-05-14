@@ -4,6 +4,7 @@ import dev.ryan.AgileBoardBackEndSpring.dtos.UserDTO;
 import dev.ryan.AgileBoardBackEndSpring.dtos.WorkspaceDTO;
 import dev.ryan.AgileBoardBackEndSpring.entities.User;
 import dev.ryan.AgileBoardBackEndSpring.entities.Workspace;
+import dev.ryan.AgileBoardBackEndSpring.exceptions.UserNotFoundException;
 import dev.ryan.AgileBoardBackEndSpring.repositories.UserRepository;
 import dev.ryan.AgileBoardBackEndSpring.repositories.WorkspaceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,29 +21,36 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     private WorkspaceRepository workspaceRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private UserService userService;
 
     @Override
     @Transactional
     public Workspace createWorkspace(Workspace workspace, User user) {
-        user.getWorkspaces().add(workspace);
-        // Also add the user to the workspace's set of users
-        workspace.getUsers().add(user);
+        // Check if workspace with the same name already exists for the user
+        if (userService.hasWorkspaceWithName(user.getId(), workspace.getName())) {
+            throw new IllegalStateException("You already have a workspace with the name: " + workspace.getName());
+        }
 
-        // depending on cascade settings, saving one might be enough, need to test this still
-        System.out.println("User Workspaces before save: " + user.getWorkspaces());
-        System.out.println("Workspace Users before save: " + workspace.getUsers());
-        userRepository.save(user);  // Since User owns the relationship
-        workspaceRepository.save(workspace);
+        // Save and flush workspace immediately to ensure it's managed and has an ID.
+        workspace = workspaceRepository.save(workspace);
+//        workspaceRepository.flush();
+
+        // Now add the workspace to the user and save the user.
+        // This avoids the problem of creating a duplicate workspace entry.
+        userService.addWorkspaceToUser(user.getId(), workspace);
 
         return workspace;
     }
+
+
 
     @Override
     @Transactional
     public Workspace updateWorkspace(Long id, Workspace workspace, User user) {
         Workspace existingWorkspace = getWorkspaceById(id, user);
         existingWorkspace.setName(workspace.getName());
-
+        existingWorkspace.setIcon(workspace.getIcon());
         if (!canAccess(id, user)) {
             throw new AccessDeniedException("Not authorized to access this workspace");
         }
@@ -80,25 +88,32 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserDTO> findAllWorkspaces(User user) {
-        Set<Workspace> workspaces = user.getWorkspaces();
+        // Fetch user again within the transaction to ensure initialization of lazily loaded collections
+        User managedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + user.getId()));
+
+        Set<Workspace> workspaces = managedUser.getWorkspaces();
         List<UserDTO> userDTOs = new ArrayList<>();
 
         for (Workspace workspace : workspaces) {
             UserDTO dto = new UserDTO();
-            dto.setId(user.getId());
-            dto.setUsername(user.getUsername());
+            dto.setId(managedUser.getId());
+            dto.setUsername(managedUser.getUsername());
 
             WorkspaceDTO workspaceDTO = new WorkspaceDTO();
             workspaceDTO.setId(workspace.getId());
             workspaceDTO.setName(workspace.getName());
+            workspaceDTO.setIcon(workspace.getIcon().getIcon()); // Ensure icon is fetched
 
-            dto.setWorkspaces(Collections.singletonList(workspaceDTO)); // Add only specific workspace details
+            dto.setWorkspaces(Collections.singletonList(workspaceDTO));
             userDTOs.add(dto);
         }
 
         return userDTOs;
     }
+
 
     @Override
     public boolean canAccess(Long workspaceId, User user) {

@@ -11,4 +11,8 @@ public interface BoardService {
     List<BoardDTO> findAllBoards(User user);
     BoardDTO updateBoard(Long id, BoardDTO boardDto, User user);
     void deleteBoardById(Long id, User user);
+
+    List<BoardDTO> findBoardsByWorkspace(Long workspaceId, User user);
+    BoardDTO getBoardWithColumnsAndCards(Long boardId, User user);
+
 }

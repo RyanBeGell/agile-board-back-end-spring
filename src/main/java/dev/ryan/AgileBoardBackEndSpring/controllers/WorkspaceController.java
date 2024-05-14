@@ -5,6 +5,7 @@ import dev.ryan.AgileBoardBackEndSpring.entities.User;
 import dev.ryan.AgileBoardBackEndSpring.entities.Workspace;
 import dev.ryan.AgileBoardBackEndSpring.services.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -31,12 +32,16 @@ public class WorkspaceController {
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Workspace> createWorkspace(@RequestBody Workspace workspace, Authentication authentication) {
+    public ResponseEntity<?> createWorkspace(@RequestBody Workspace workspace, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        Workspace createdWorkspace = workspaceService.createWorkspace(workspace, user);
-        return ResponseEntity.ok(createdWorkspace);
+        try {
+            Workspace createdWorkspace = workspaceService.createWorkspace(workspace, user);
+            return ResponseEntity.ok(createdWorkspace);
+        } catch (IllegalStateException e) {
+            // Returning a more specific status code for conflict/error
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
-
     @GetMapping("/{id}")
     public ResponseEntity<Workspace> getWorkspaceById(@PathVariable Long id, Authentication authentication) {
         User user = (User) authentication.getPrincipal();

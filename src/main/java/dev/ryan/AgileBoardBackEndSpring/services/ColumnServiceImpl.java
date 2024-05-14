@@ -1,7 +1,9 @@
 package dev.ryan.AgileBoardBackEndSpring.services;
 
+import dev.ryan.AgileBoardBackEndSpring.dtos.CardDTO;
 import dev.ryan.AgileBoardBackEndSpring.dtos.ColumnDTO;
 import dev.ryan.AgileBoardBackEndSpring.entities.Board;
+import dev.ryan.AgileBoardBackEndSpring.entities.Card;
 import dev.ryan.AgileBoardBackEndSpring.entities.Column;
 import dev.ryan.AgileBoardBackEndSpring.entities.User;
 import dev.ryan.AgileBoardBackEndSpring.exceptions.ColumnNotFoundException;
@@ -28,8 +30,26 @@ public class ColumnServiceImpl implements ColumnService {
         this.boardRepository = boardRepository;
     }
 
-    private ColumnDTO toDto(Column column) {
-        return new ColumnDTO(column.getId(), column.getName(), column.getPosition(), column.getBoard().getId());
+    private ColumnDTO toColumnDto(Column column) {
+        return new ColumnDTO(
+                column.getId(),
+                column.getName(),
+                column.getPosition(),
+                column.getBoard().getId(),
+                column.getCards().stream().map(this::toCardDto).collect(Collectors.toList())
+        );
+    }
+
+    private CardDTO toCardDto(Card card) {
+        return new CardDTO(
+                card.getId(),
+                card.getTitle(),
+                card.getDescription(),
+                card.getColumn().getId(),
+                card.getPosition(),
+                card.getDueDate(),
+                card.getAssignees().stream().map(User::getId).collect(Collectors.toSet())
+        );
     }
 
     private Column fromDto(ColumnDTO columnDto, Board board) {
@@ -58,7 +78,7 @@ public class ColumnServiceImpl implements ColumnService {
         column.setBoard(board);
         column.setPosition(newPosition);  // Set the next position
         column = columnRepository.save(column);
-        return toDto(column); // Convert the saved entity to DTO before returning
+        return toColumnDto(column); // Convert the saved entity to DTO before returning
     }
 
     @Override
@@ -68,7 +88,7 @@ public class ColumnServiceImpl implements ColumnService {
         if (!workspaceService.canAccess(column.getBoard().getWorkspace().getId(), user)) {
             throw new AccessDeniedException("Not authorized to access this board");
         }
-        return toDto(column);
+        return toColumnDto(column);
     }
 
     @Override
@@ -79,7 +99,7 @@ public class ColumnServiceImpl implements ColumnService {
             throw new AccessDeniedException("Not authorized to access this board");
         }
         List<Column> columns = columnRepository.findByBoardIdOrderByPosition(boardId);
-        return columns.stream().map(this::toDto).collect(Collectors.toList());
+        return columns.stream().map(this::toColumnDto).collect(Collectors.toList());
     }
 
     @Override
@@ -92,7 +112,7 @@ public class ColumnServiceImpl implements ColumnService {
         existingColumn.setName(columnDto.getName());
         existingColumn.setPosition(columnDto.getPosition());
         columnRepository.save(existingColumn);
-        return toDto(existingColumn);
+        return toColumnDto(existingColumn);
     }
 
     @Override

@@ -37,6 +37,13 @@ public class BoardController {
         return ResponseEntity.ok(boardService.findBoardById(id, user));
     }
 
+    @GetMapping("/workspace/{workspaceId}")
+    public ResponseEntity<List<BoardDTO>> getBoardsByWorkspace(@PathVariable Long workspaceId, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        List<BoardDTO> boards = boardService.findBoardsByWorkspace(workspaceId, user);
+        return ResponseEntity.ok(boards);
+    }
+
     @GetMapping
     public ResponseEntity<List<BoardDTO>> getAllBoards(Authentication authentication) {
         User user = userService.findUserByUsername(authentication.getName());
@@ -54,5 +61,12 @@ public class BoardController {
         User user = userService.findUserByUsername(authentication.getName());
         boardService.deleteBoardById(id, user);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{boardId}/full")
+    public ResponseEntity<BoardDTO> getBoardWithColumnsAndCards(@PathVariable Long boardId, Authentication authentication) {
+        User user = userService.findUserByUsername(authentication.getName());
+        BoardDTO boardDTO = boardService.getBoardWithColumnsAndCards(boardId, user);
+        return ResponseEntity.ok(boardDTO);
     }
 }
