@@ -6,11 +6,16 @@ import dev.ryan.AgileBoardBackEndSpring.dtos.ColumnDTO;
 import dev.ryan.AgileBoardBackEndSpring.entities.*;
 import dev.ryan.AgileBoardBackEndSpring.exceptions.BoardNotFoundException;
 import dev.ryan.AgileBoardBackEndSpring.repositories.BoardRepository;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,44 +24,15 @@ public class BoardServiceImpl implements BoardService {
     private final BoardRepository boardRepository;
     @Autowired
     private WorkspaceService workspaceService;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     public BoardServiceImpl(BoardRepository boardRepository) {
         this.boardRepository = boardRepository;
     }
 
-    private BoardDTO toBoardDto(Board board) {
-        return new BoardDTO(
-                board.getId(),
-                board.getName(),
-                board.getDescription(),
-                board.getWorkspace().getId(),
-                board.getGradient(),
-                board.getColumns().stream().map(this::toColumnDto).collect(Collectors.toList())
-        );
-    }
 
-    private ColumnDTO toColumnDto(Column column) {
-        return new ColumnDTO(
-                column.getId(),
-                column.getName(),
-                column.getPosition(),
-                column.getBoard().getId(),
-                column.getCards().stream().map(this::toCardDto).collect(Collectors.toList())
-        );
-    }
-
-    private CardDTO toCardDto(Card card) {
-        return new CardDTO(
-                card.getId(),
-                card.getTitle(),
-                card.getDescription(),
-                card.getColumn().getId(),
-                card.getPosition(),
-                card.getDueDate(),
-                card.getAssignees().stream().map(User::getId).collect(Collectors.toSet())
-        );
-    }
     private Board fromDto(BoardDTO boardDto, User user) {
         Board board = new Board();
         board.setId(boardDto.getId());
@@ -83,7 +59,8 @@ public class BoardServiceImpl implements BoardService {
         if (!workspaceService.canAccess(board.getWorkspace().getId(), user)) {
             throw new AccessDeniedException("Not authorized to access this workspace");
         }
-        return toBoardDto(boardRepository.save(board));
+        board = boardRepository.save(board);
+        return board.toDto();
     }
 
     @Override
@@ -92,12 +69,12 @@ public class BoardServiceImpl implements BoardService {
         if (!workspaceService.canAccess(board.getWorkspace().getId(), user)) {
             throw new AccessDeniedException("Not authorized to access this board");
         }
-        return toBoardDto(board);
+        return board.toDto();
     }
 
     @Override
     public List<BoardDTO> findAllBoards(User user) {
-        return boardRepository.findAllByWorkspaceIn(user.getWorkspaces()).stream().map(this::toBoardDto).collect(Collectors.toList());
+        return boardRepository.findAllByWorkspaceIn(user.getWorkspaces()).stream().map(Board::toDto).collect(Collectors.toList());
     }
 
     @Override
@@ -107,7 +84,8 @@ public class BoardServiceImpl implements BoardService {
         if (!workspaceService.canAccess(board.getWorkspace().getId(), user)) {
             throw new AccessDeniedException("Not authorized to modify this board");
         }
-        return toBoardDto(boardRepository.save(board));
+        board = boardRepository.save(board);
+        return board.toDto();
     }
 
     @Override
@@ -126,17 +104,27 @@ public class BoardServiceImpl implements BoardService {
 
         // Fetch boards for the workspace if the user has access
         List<Board> boards = boardRepository.findAllByWorkspaceId(workspaceId);
-        return boards.stream().map(this::toBoardDto).collect(Collectors.toList());
+        return boards.stream().map(Board::toDto).collect(Collectors.toList());
     }
 
     @Override
-    public BoardDTO getBoardWithColumnsAndCards(Long boardId, User user) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("Board not found with id: " + boardId));
-        if (!workspaceService.canAccess(board.getWorkspace().getId(), user)) {
-            throw new AccessDeniedException("Not authorized to access this board");
+    @Transactional(readOnly = true)
+    public BoardDTO getBoardWithColumnsAndCards(Long id, User user) {
+        // Fetch the board by its ID with columns and cards
+        Board board = boardRepository.findByIdWithColumnsAndCards(id);
+
+        // Check if the board exists
+        if (board == null) {
+            throw new BoardNotFoundException("Board not found with id: " + id);
         }
-        return toBoardDto(board);
+
+        // Check if the user has access to the workspace of the board
+        if (!workspaceService.canAccess(board.getWorkspace().getId(), user)) {
+            throw new AccessDeniedException("User does not have access to the workspace with ID: " + board.getWorkspace().getId());
+        }
+
+        // Convert the board to its DTO and return it
+        return board.toDto();
     }
 
 }
