@@ -63,10 +63,4 @@ public class BoardController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{boardId}/full")
-    public ResponseEntity<BoardDTO> getBoardWithColumnsAndCards(@PathVariable Long boardId, Authentication authentication) {
-        User user = userService.findUserByUsername(authentication.getName());
-        BoardDTO boardDTO = boardService.getBoardWithColumnsAndCards(boardId, user);
-        return ResponseEntity.ok(boardDTO);
-    }
 }
