@@ -76,6 +76,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Workspace getWorkspaceById(Long id, User user) {
         Workspace workspace = workspaceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
@@ -116,6 +117,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public boolean canAccess(Long workspaceId, User user) {
         return workspaceRepository.findById(workspaceId)
                 .map(workspace -> {
