@@ -119,10 +119,8 @@ public class ColumnServiceImpl implements ColumnService {
     @Transactional
     public void deleteColumnById(Long id, User user) {
         Column column = columnRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + id));
-        if (!workspaceService.canAccess(column.getBoard().getWorkspace().getId(), user)) {
-            throw new AccessDeniedException("Not authorized to access this board");
-        }
+                .orElseThrow(() -> new ColumnNotFoundException("Column not found with id: " + id));
+
         columnRepository.delete(column); // Delete the column
         reorderRemainingColumns(column.getBoard().getId()); // Reorder the columns after deletion
     }
